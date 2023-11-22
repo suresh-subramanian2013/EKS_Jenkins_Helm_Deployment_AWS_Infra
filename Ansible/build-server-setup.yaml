@@ -23,15 +23,16 @@
      apt: 
         name: docker.io
         state: present
-   - name: start docker service 
-     service: 
-         name: docker
-         stated: started
    - name: start docker serice on start 
      service:
          name: docker
          enabled: yes   
-         
+                 
+   - name: start docker service 
+     service: 
+         name: docker
+         stated: started
+
    - name: Give 777 permision on Var 
      file:
          path: /var/run/docker.sock
