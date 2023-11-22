@@ -58,7 +58,7 @@
         dest: /tmp/awscliv2.zip
 
    - name: install Unzip
-    apt:
+     apt:
        name: unzip 
        state: present
 
