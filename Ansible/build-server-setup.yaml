@@ -28,11 +28,6 @@
          name: docker
          enabled: yes   
                  
-   - name: start docker service 
-     service: 
-         name: docker
-         stated: started
-
    - name: Give 777 permision on Var 
      file:
          path: /var/run/docker.sock
