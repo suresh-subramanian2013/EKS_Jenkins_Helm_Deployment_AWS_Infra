@@ -2,6 +2,19 @@ provider "aws" {
     region = "us-east-1"
   
 }
+variable "ansible_user_data" {
+  default = <<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install -y software-properties-common
+              add-apt-repository --yes --update ppa:ansible/ansible
+              apt-get install -y ansible
+              # Additional software installation steps can be added here
+              apt-get install git -y 
+              cd /opt 
+              git clone https://github.com/ravipramoth/devops_infra.git
+            EOF
+}
 
 resource "aws_instance" "demo-server" {
     ami= "ami-0fc5d935ebf8bc3bc"
@@ -10,11 +23,15 @@ resource "aws_instance" "demo-server" {
     vpc_security_group_ids = [aws_security_group.demo-sg.id]
     subnet_id = aws_subnet.dpp-public-subnet-01.id
     for_each = toset(["jenkins-master","build-server", "ansible"])
+    
     tags ={
         Name = "${each.key}"
     }
-     
+
+    user_data = each.key == "ansible" ? var.ansible_user_data : null
 }
+
+
 
 resource "aws_security_group" "demo-sg" {
     name = "demo-sg"
@@ -107,9 +124,9 @@ resource "aws_route_table" "dpp-public-rt" {
     vpc_id     =     aws_vpc.dpp-vpc.id
  }
 
-  module "eks" {
-       source = "../eks"
-       vpc_id     =     aws_vpc.dpp-vpc.id
-       subnet_ids = [aws_subnet.dpp-public-subnet-01.id,aws_subnet.dpp-public-subnet-02.id]
-       sg_ids = module.sgs.security_group_public
- }
+#   module "eks" {
+#        source = "../eks"
+#        vpc_id     =     aws_vpc.dpp-vpc.id
+#        subnet_ids = [aws_subnet.dpp-public-subnet-01.id,aws_subnet.dpp-public-subnet-02.id]
+#        sg_ids = module.sgs.security_group_public
+#  }

@@ -19,20 +19,40 @@
           src: /opt/apache-maven-3.9.5-bin.tar.gz
           dest: /opt
           remote_src: yes
-    - name: install Docker 
-      apt: 
+   - name: install Docker 
+     apt: 
         name: docker.io
         state: present
-    - name: start docker service 
-      service: 
+   - name: start docker service 
+     service: 
          name: docker
          stated: started
-    - name: Give 777 permision on Var 
-      file:
+   - name: start docker serice on start 
+     service:
+         name: docker
+         enabled: yes   
+         
+   - name: Give 777 permision on Var 
+     file:
          path: /var/run/docker.sock
          state: file 
          mode: 777
-    - name: start docker serice on start 
-      service:
-         name: docker
-         enabled: yes       
+
+   - name: Download kubectl
+     get_url:
+        url: https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.9/2023-01-11/bin/linux/amd64/kubectl
+        dest: /tmp/kubectl
+        mode: '0755'
+
+   - name: Move kubectl to /usr/local/bin
+     command: mv /tmp/kubectl /usr/local/bin
+
+   - name: Download get_helm.sh
+     get_url:
+        url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+        dest: /tmp/get_helm.sh
+        mode: '0700'
+
+   - name: Execute get_helm.sh
+     command: /tmp/get_helm.sh
+    
