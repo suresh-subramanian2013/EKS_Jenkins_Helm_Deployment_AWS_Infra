@@ -51,4 +51,24 @@
 
    - name: Execute get_helm.sh
      command: /tmp/get_helm.sh
+
+   - name: Download AWS CLI
+     get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+
+  - name: install Unzip
+    apt:
+       name: unzip 
+       state: present
+
+   - name: Unzip AWS CLI
+     unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: yes
+
+   - name: Install AWS CLI
+     command: /tmp/aws/install --update
+
     
