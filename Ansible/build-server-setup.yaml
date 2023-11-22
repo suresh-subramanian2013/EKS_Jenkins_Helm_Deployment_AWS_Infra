@@ -57,7 +57,7 @@
         url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
         dest: /tmp/awscliv2.zip
 
-  - name: install Unzip
+   - name: install Unzip
     apt:
        name: unzip 
        state: present
