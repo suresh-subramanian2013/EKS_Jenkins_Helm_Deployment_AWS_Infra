@@ -1,5 +1,6 @@
 provider "aws" {
     region = "us-east-1"
+    profile = "sk"
   
 }
 variable "ansible_user_data" {
