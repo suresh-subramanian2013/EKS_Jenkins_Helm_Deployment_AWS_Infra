@@ -33,12 +33,6 @@
          path: /var/run/docker.sock
          state: file 
          mode: 777
-   - name: Give 700 permision on pem key 
-     file:
-         path: /opt/EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/demo.pem
-         state: file 
-         mode: 700
-
    - name: Download kubectl
      get_url:
         url: https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.9/2023-01-11/bin/linux/amd64/kubectl
