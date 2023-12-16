@@ -75,7 +75,7 @@
 
    - name: Install AWS CLI
      command: /tmp/aws/install --update
-   - name: create Aurora Cluster with the AWS CLI
+   - name: update eks cluster 
      command: aws eks update-kubeconfig --region us-east-1 --name demo-eks-01
 
     
