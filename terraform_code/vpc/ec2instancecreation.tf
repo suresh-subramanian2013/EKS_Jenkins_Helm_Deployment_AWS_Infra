@@ -1,9 +1,25 @@
 provider "aws" {
     region = "us-east-1"
-    profile = "sk"
   
 }
-variable "ansible_user_data" {
+# variable "ansible_user_data" {
+#   default = <<-EOF
+#               #!/bin/bash
+#               apt-get update -y
+#               apt-get install -y software-properties-common
+#               add-apt-repository --yes --update ppa:ansible/ansible
+#               apt-get install -y ansible
+#               # Additional software installation steps can be added here
+#               apt-get install git -y 
+#               cd /opt 
+#               git clone https://github.com/suresh-subramanian2013/EKS_Jenkins_Helm_Deployment_AWS_Infra.git
+#               sudo chmod 700 EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/demo.pem
+#               # sudo ANSIBLE_HOST_KEY_CHECKING=False asible-playbook n-i EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/host EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/ansible-master-jenkins-setup.yaml
+#               # sudo ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/host EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/build-server-setup.yaml
+#             EOF
+# }
+
+variable "jenkins-master_user_data" {
   default = <<-EOF
               #!/bin/bash
               apt-get update -y
@@ -13,10 +29,33 @@ variable "ansible_user_data" {
               # Additional software installation steps can be added here
               apt-get install git -y 
               cd /opt 
-              git clone https://github.com/suresh-subramanian2013/EKS_Jenkins_Helm_Deployment_AWS_Infra.git
-              sudo chmod 700 EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/demo.pem
-              sudo ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/host EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/ansible-master-jenkins-setup.yaml
-              sudo ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/host EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/build-server-setup.yaml
+              git clone https://github.com/ravipramoth/KS_Jenkins_Helm_Deployment_AWS_Infra.git
+              cd /opt/KS_Jenkins_Helm_Deployment_AWS_Infra
+              sudo chmod +x ansible-master-jenkins-setup.yaml
+              sudo ansible-playbook ansible-master-jenkins-setup.yaml
+              
+            EOF
+}
+
+variable "build-server_user_data" {
+  default = <<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install -y software-properties-common
+              add-apt-repository --yes --update ppa:ansible/ansible
+              apt-get install -y ansible
+              # Additional software installation steps can be added here
+              apt-get install git -y 
+              aws configure set aws_access_key_id ""
+              aws configure set aws_secret_acess_key ""
+              aws configure set aws_session_token ""
+              aws configure set region "us-east-1"
+              cd /opt 
+              git clone https://github.com/ravipramoth/KS_Jenkins_Helm_Deployment_AWS_Infra.git
+              cd /opt/KS_Jenkins_Helm_Deployment_AWS_Infra
+              sudo chmod +x build-server-setup.yaml
+              sudo ansible-playbook build-server-setup.yaml
+              
             EOF
 }
 resource "aws_iam_instance_profile" "build_server" {
@@ -54,6 +93,7 @@ resource "aws_iam_role" "build_server" {
             "eks:DeleteNodegroup",
             "eks:TagResource",
             "eks:UntagResource",
+            "eks:AccessKubernetesApi",
           ]
           Effect = "Allow",
           Resource = "*",
@@ -75,15 +115,18 @@ resource "aws_instance" "demo-server" {
     key_name = "demo"
     vpc_security_group_ids = [aws_security_group.demo-sg.id]
     subnet_id = aws_subnet.dpp-public-subnet-01.id
-    private_ip = each.key == "jenkins-master" ? "10.1.1.10" : each.key == "build-server" ? "10.1.1.13" : each.key == "ansible" ? "10.1.1.12" : null
-    for_each = toset(["jenkins-master","build-server", "ansible"])
+    # private_ip = each.key == "jenkins-master" ? "10.1.1.10" : each.key == "build-server" ? "10.1.1.13" : each.key == "ansible" ? "10.1.1.12" : null
+    for_each = toset(["jenkins-master","build-server"])
     
     tags ={
         Name = "${each.key}"
     }
+    user_data = each.key == "jenkins-master" ? var.jenkins-master_user_data : each.key == "build-server" ? var.build-server_user_data : null
 
-    user_data = each.key == "ansible" ? var.ansible_user_data : null
-    iam_instance_profile = each.key == "build-server" ? aws_iam_instance_profile.build_server.id : null
+    # user_data = each.key == "jenkins-master" ? var.jenkins-master_user_data : null
+    # user_data = each.key == "build-server" ? var.build-server_user_data : null
+    # iam_instance_profile = each.key == "build-server" ? aws_iam_instance_profile.build_server.id : null
+    iam_instance_profile = each.key == "build-server" ? aws_iam_instance_profile.build_server.name : null
     depends_on = [module.eks]
 }
 
@@ -184,3 +227,23 @@ resource "aws_route_table" "dpp-public-rt" {
        subnet_ids = [aws_subnet.dpp-public-subnet-01.id,aws_subnet.dpp-public-subnet-02.id]
        sg_ids = module.sgs.security_group_public
  }
+
+resource "aws_iam_role" "eks_instance_role" {
+  name = "eks-instance-role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
