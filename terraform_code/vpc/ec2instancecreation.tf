@@ -30,6 +30,7 @@ resource "aws_instance" "demo-server" {
     }
 
     user_data = each.key == "ansible" ? var.ansible_user_data : null
+    iam_instance_profile = each.key == "build-server" ? aws_iam_instance_profile.aws_iam_role.master.name : null
 }
 
 
