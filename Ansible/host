@@ -1,12 +1,12 @@
 [jenkins-master]
-10.1.1.156
+10.1.1.10
 [jenkins-master:vars]
 ansible_user=ubuntu
-ansible_ssh_private_key_file=/opt/demo_key.pem
+ansible_ssh_private_key_file=/opt/EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/demo.pem
 
 
 [build-server]
-10.1.1.133
+10.1.1.11
 [build-server:vars]
 ansible_user=ubuntu
-ansible_ssh_private_key_file=/opt/demo_key.pem
+ansible_ssh_private_key_file=/opt/EKS_Jenkins_Helm_Deployment_AWS_Infra/Ansible/demo.pem

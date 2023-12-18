@@ -33,7 +33,6 @@
          path: /var/run/docker.sock
          state: file 
          mode: 777
-
    - name: Download kubectl
      get_url:
         url: https://s3.us-west-2.amazonaws.com/amazon-eks/1.24.9/2023-01-11/bin/linux/amd64/kubectl
@@ -70,5 +69,7 @@
 
    - name: Install AWS CLI
      command: /tmp/aws/install --update
+   - name: update eks cluster 
+     command: sudo su && aws eks update-kubeconfig --region us-east-1 --name demo-eks-01
 
     
